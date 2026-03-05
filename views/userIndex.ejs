@@ -1,0 +1,15 @@
+<h1>User List </h1>
+<ul>
+    <% users.forEach(user => { %>
+        <li><%= user.username %></li>
+        <li><%= user.email %></li>
+    <% }) %>
+</ul>
+
+<h1> Create User</h1>
+<form action="/create" method="POST">
+    <input type="text" name="username" placeholder="Username">
+    <input type="email" name="email" placeholder="Email">
+    <input type="password" name="password" placeholder="Password">
+    <button type="submit">Create</button>
+</form>
