@@ -1,2 +1,2 @@
 # Sybau-CTF
-Web Porject Term 2
+Web Project Term 2
