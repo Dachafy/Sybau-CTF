@@ -1,0 +1,69 @@
+<section class="min-h-screen bg-base-200 px-4 py-10">
+    <div class="mx-auto max-w-6xl">
+        <div class="mb-8 flex flex-col gap-4 rounded-box border border-primary/20 bg-base-100 p-6 shadow-lg lg:flex-row lg:items-center lg:justify-between">
+            <div>
+                <p class="text-sm font-mono uppercase tracking-[0.25em] text-primary">Protected Dashboard</p>
+                <h1 class="text-4xl font-black">User Directory</h1>
+                <p class="text-base-content/70">
+                    Welcome, <strong><%= typeof(userName) !== 'undefined' ? userName : 'Guest' %></strong>.
+                    <% if (search) { %>
+                        Showing results for "<%= search %>".
+                    <% } else { %>
+                        All registered users are listed below.
+                    <% } %>
+                </p>
+            </div>
+            <div class="flex flex-wrap gap-3">
+                <a href="/signup" class="btn btn-primary">Add another user</a>
+                <form action="/logout" method="POST">
+                    <button type="submit" class="btn btn-secondary">Logout</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="mb-6 rounded-box border border-base-300 bg-base-100 p-5 shadow">
+            <form action="/dashboard" method="GET" class="flex flex-col gap-3 md:flex-row">
+                <input
+                    type="text"
+                    placeholder="Search by name or email"
+                    name="search"
+                    class="input input-bordered flex-1"
+                    value="<%= search || '' %>"
+                />
+                <button class="btn btn-primary" type="submit">Search</button>
+                <a href="/dashboard" class="btn btn-ghost">Clear</a>
+            </form>
+        </div>
+
+        <div class="overflow-x-auto rounded-box border border-base-300 bg-base-100 shadow">
+            <table class="table w-full">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Gender</th>
+                        <th>Province</th>
+                        <th>Joined</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (users.length === 0) { %>
+                        <tr>
+                            <td colspan="5" class="py-8 text-center text-base-content/70">No users matched your search.</td>
+                        </tr>
+                    <% } %>
+
+                    <% users.forEach((user) => { %>
+                        <tr>
+                            <td><%= user.first_name %> <%= user.last_name %></td>
+                            <td><%= user.email %></td>
+                            <td class="capitalize"><%= user.gender %></td>
+                            <td><%= user.province %></td>
+                            <td><%= new Date(user.created_at).toLocaleDateString() %></td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>

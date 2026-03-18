@@ -1,0 +1,48 @@
+<section class="min-h-screen bg-base-200 px-4 py-12">
+    <div class="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+        <div class="rounded-box border border-secondary/20 bg-base-300 p-10">
+            <p class="mb-3 text-sm font-mono uppercase tracking-[0.3em] text-secondary">Session Login</p>
+            <h1 class="mb-4 text-5xl font-black uppercase leading-none">Sign in with a protected cookie session.</h1>
+            <p class="max-w-xl text-base-content/70">
+                Successful login validates the hashed password from MySQL, regenerates the session, and writes the session cookie for the dashboard.
+            </p>
+            <div class="mt-8 flex flex-wrap gap-3">
+                <a href="/signup" class="btn btn-primary">Create account</a>
+                <a href="/" class="btn btn-ghost">Back home</a>
+            </div>
+        </div>
+
+        <div class="card border border-base-300 bg-base-100 shadow-xl">
+            <div class="card-body">
+                <div class="mb-4">
+                    <p class="text-sm font-mono uppercase tracking-[0.25em] text-secondary">Login</p>
+                    <h2 class="card-title text-3xl font-black">Welcome back</h2>
+                </div>
+
+                <% if (error) { %>
+                    <div class="alert alert-error mb-4">
+                        <span><%= error %></span>
+                    </div>
+                <% } %>
+
+                <form action="/login" method="POST">
+                    <div class="form-control">
+                        <label class="label" for="email"><span class="label-text">Email</span></label>
+                        <input id="email" type="email" name="email" class="input input-bordered" value="<%= formData.email %>" required />
+                    </div>
+                    <div class="form-control">
+                        <label class="label" for="password"><span class="label-text">Password</span></label>
+                        <input id="password" type="password" name="password" class="input input-bordered" required />
+                    </div>
+                    <div class="form-control mt-6">
+                        <button class="btn btn-secondary">Login</button>
+                    </div>
+                </form>
+
+                <p class="mt-4 text-sm text-base-content/70">
+                    Need an account? <a class="link link-primary" href="/signup">Sign up</a>.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
