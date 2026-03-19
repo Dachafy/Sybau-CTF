@@ -255,15 +255,19 @@ export async function loginUser(req, res) {
 
 export async function listUser(req, res) {
     try {
-        const search = cleanText(req.query.search);
-        const [rows] = search ? await User.findUser(search) : await User.fetchAll();
+        const userId = req.session.user?.id || req.session.userId;
+        const [rows] = await User.findById(userId);
+
+        if (rows.length === 0) {
+            await destroySession(req);
+            res.clearCookie(sessionCookieName);
+            return res.redirect(303, '/login');
+        }
 
         res.render('users/list', {
             layout: 'templates/mains',
             title: 'Dashboard',
-            users: rows,
-            userName: req.session.user?.firstName || req.session.userName,
-            search
+            profile: rows[0]
         });
     } catch (error) {
         console.error(error);   
