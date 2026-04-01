@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import api, { STATIC_BASE } from '../utils/api';
+import api, { getStaticUrl } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 
 export default function ChallengeView() {
@@ -15,9 +15,7 @@ export default function ChallengeView() {
   const [showHint, setShowHint] = useState(false);
 
   const attachmentHref = challenge?.attachment_url
-    ? (challenge.attachment_url.startsWith('http')
-        ? challenge.attachment_url
-        : `${STATIC_BASE}${challenge.attachment_url}`)
+    ? getStaticUrl(challenge.attachment_url)
     : null;
 
   useEffect(() => {

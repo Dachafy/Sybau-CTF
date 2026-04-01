@@ -1,10 +1,30 @@
 import axios from 'axios';
 
-// Static files are served by the backend directly, so in development they need
-// the API server origin instead of the CRA dev server origin.
-export const STATIC_BASE = process.env.NODE_ENV === 'development'
+const LOCAL_HOSTS = ['localhost', '127.0.0.1'];
+const isLocalBrowser = LOCAL_HOSTS.includes(window.location.hostname);
+
+// Static files are served by the backend directly. Use the local backend only
+// when the browser itself is running on localhost; otherwise keep same-origin.
+export const STATIC_BASE = isLocalBrowser
   ? 'http://localhost:5000'
   : window.location.origin;
+
+export const getStaticUrl = (url) => {
+  if (!url) return '';
+
+  try {
+    const parsed = new URL(url, STATIC_BASE);
+    const isLocalAsset = LOCAL_HOSTS.includes(parsed.hostname);
+
+    if (!isLocalBrowser && isLocalAsset) {
+      return `${window.location.origin}${parsed.pathname}${parsed.search}${parsed.hash}`;
+    }
+
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+};
 
 const api = axios.create({
   baseURL: '/api',
