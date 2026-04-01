@@ -1,12 +1,12 @@
 import axios from 'axios';
 
 const LOCAL_HOSTS = ['localhost', '127.0.0.1'];
-const isLocalBrowser = LOCAL_HOSTS.includes(window.location.hostname);
+const isDevelopment = process.env.NODE_ENV !== 'production';
 
-// Static files are served by the backend directly. Use the local backend only
-// when the browser itself is running on localhost; otherwise keep same-origin.
-export const STATIC_BASE = isLocalBrowser
-  ? 'http://localhost:5000'
+// Challenge attachments are opened directly in the browser, so they must point
+// at the backend itself in development instead of the React dev server.
+export const STATIC_BASE = isDevelopment
+  ? `${window.location.protocol}//${window.location.hostname}:5000`
   : window.location.origin;
 
 export const getStaticUrl = (url) => {
@@ -16,8 +16,8 @@ export const getStaticUrl = (url) => {
     const parsed = new URL(url, STATIC_BASE);
     const isLocalAsset = LOCAL_HOSTS.includes(parsed.hostname);
 
-    if (!isLocalBrowser && isLocalAsset) {
-      return `${window.location.origin}${parsed.pathname}${parsed.search}${parsed.hash}`;
+    if (url.startsWith('/') || (isDevelopment && isLocalAsset)) {
+      return `${STATIC_BASE}${parsed.pathname}${parsed.search}${parsed.hash}`;
     }
 
     return parsed.toString();

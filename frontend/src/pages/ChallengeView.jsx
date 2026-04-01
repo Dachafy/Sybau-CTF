@@ -111,6 +111,8 @@ export default function ChallengeView() {
             <a
               href={attachmentHref}
               className="btn btn-cyan btn-sm"
+              target="_blank"
+              rel="noopener noreferrer"
               style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
             >
               ↓ OPEN: {challenge.attachment_name}
