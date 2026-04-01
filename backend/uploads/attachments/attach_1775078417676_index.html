@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTF Challenge - Login Portal</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            text-align: center;
+            margin: 0;
+            padding: 50px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #00cc00;
+            text-shadow: 0 0 10px #00ff00;
+        }
+        input, button {
+            padding: 12px;
+            margin: 10px;
+            font-size: 16px;
+            background: #1a1a1a;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+        }
+        button {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #00ff00;
+            color: #000;
+        }
+        .hint {
+            margin-top: 40px;
+            font-size: 14px;
+            opacity: 0.6;
+        }
+        
+        /* Hidden flag - multiple ways to discover it */
+        .flag {
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+            opacity: 0;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SECURE LOGIN SYSTEM v2.1</h1>
+        <p>Welcome to the CTF Challenge Platform</p>
+        
+        <form id="loginForm">
+            <input type="text" id="username" placeholder="Username" required><br>
+            <input type="password" id="password" placeholder="Password" required><br>
+            <button type="button" onclick="login()">LOGIN</button>
+        </form>
+
+        <div class="hint">
+            Hint: Sometimes the flag is not where you expect it to be...
+        </div>
+    </div>
+
+    <!-- Hidden Flag - Several common CTF hiding techniques combined -->
+    
+    <!-- 1. Hidden in HTML comment -->
+    <!-- flag{html_comments_are_too_easy} -->
+
+    <!-- 2. Hidden using CSS (off-screen) -->
+    <div class="flag" id="hiddenFlag">flag{css_positioning_trick}</div>
+
+    <!-- 3. Hidden in data attribute -->
+    <div id="secret" data-flag="flag{data_attributes_are_useful}"></div>
+
+    <!-- 4. Hidden in JavaScript (best one) -->
+    <script>
+        // Real flag - players need to inspect source or use DevTools
+        const realFlag = "flag{inspect_the_source_code_c4r3fully}";
+
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (username === "admin" && password === "password123") {
+                alert("Login successful! But the real prize is elsewhere...");
+            } else {
+                alert("Access Denied. Try harder.");
+            }
+        }
+
+        // Easter egg: Pressing a specific key combination reveals hint
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === "f") {
+                console.log("%cNice try! The flag is: " + realFlag, "color: lime; font-size: 16px;");
+                console.log("%cHint: Check the page source and JavaScript carefully", "color: yellow;");
+            }
+        });
+
+        // Another hint in console
+        console.log("%cCTF Tip: Always check the source code and network tab!", "color: #00ff00; font-weight: bold;");
+        console.log("%cThe flag might be closer than you think...", "color: orange;");
+    </script>
+
+</body>
+</html>

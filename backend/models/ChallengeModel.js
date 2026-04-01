@@ -57,6 +57,24 @@ const getChallengeById = async (userId, challengeId) => {
   };
 };
 
+const getChallengeAttachmentById = async (challengeId) => {
+  const [rows] = await pool.query(
+    `
+      SELECT id, attachment_url, attachment_name
+      FROM challenges
+      WHERE id = ? AND is_active = 1
+    `,
+    [challengeId]
+  );
+
+  if (!rows[0]) return null;
+
+  return {
+    ...rows[0],
+    attachment_url: normalizeAssetPath(rows[0].attachment_url),
+  };
+};
+
 // ─── Submissions ──────────────────────────────────────────────────────────────
 
 const checkAlreadySolved = async (conn, userId, challengeId) => {
@@ -98,6 +116,6 @@ const recordSolve = async (conn, userId, challengeId, points) => {
 };
 
 module.exports = {
-  getAllChallenges, getChallengeById,
+  getAllChallenges, getChallengeById, getChallengeAttachmentById,
   checkAlreadySolved, getActiveChallengeById, insertSubmission, recordSolve,
 };

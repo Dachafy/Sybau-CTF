@@ -1,7 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import api, { getStaticUrl } from '../utils/api';
+import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+
+const getAttachmentErrorMessage = async (err) => {
+  if (err.response?.data instanceof Blob) {
+    try {
+      const text = await err.response.data.text();
+      const parsed = JSON.parse(text);
+      return parsed.error || 'Download failed';
+    } catch {
+      return 'Download failed';
+    }
+  }
+
+  return err.response?.data?.error || 'Download failed';
+};
+
+const getDownloadFilename = (contentDisposition, fallbackName) => {
+  if (!contentDisposition) return fallbackName;
+
+  const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match?.[1]) {
+    return decodeURIComponent(utf8Match[1]);
+  }
+
+  const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/i);
+  return filenameMatch?.[1] || fallbackName;
+};
 
 export default function ChallengeView() {
   const { id } = useParams();
@@ -13,17 +39,46 @@ export default function ChallengeView() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showHint, setShowHint] = useState(false);
-
-  const attachmentHref = challenge?.attachment_url
-    ? getStaticUrl(challenge.attachment_url)
-    : null;
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState('');
 
   useEffect(() => {
     api.get(`/challenges/${id}`)
       .then(r => setChallenge(r.data.challenge))
       .catch(() => navigate('/dashboard'))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, navigate]);
+
+  const handleDownload = async () => {
+    if (!challenge?.attachment_url || downloading) return;
+
+    setDownloading(true);
+    setDownloadError('');
+
+    try {
+      const res = await api.get(`/challenges/${id}/download`, {
+        responseType: 'blob',
+      });
+      const filename = getDownloadFilename(
+        res.headers['content-disposition'],
+        challenge.attachment_name || `challenge-${id}-attachment`
+      );
+      const blobUrl = window.URL.createObjectURL(res.data);
+      const link = document.createElement('a');
+
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
+    } catch (err) {
+      setDownloadError(await getAttachmentErrorMessage(err));
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -108,15 +163,20 @@ export default function ChallengeView() {
             <div style={{ fontFamily: 'var(--pixel)', fontSize: '8px', color: 'var(--cyan)', marginBottom: 10 }}>
               {'>'} ATTACHMENT
             </div>
-            <a
-              href={attachmentHref}
+            <button
+              type="button"
+              onClick={handleDownload}
               className="btn btn-cyan btn-sm"
-              target="_blank"
-              rel="noopener noreferrer"
+              disabled={downloading}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
             >
-              ↓ OPEN: {challenge.attachment_name}
-            </a>
+              {downloading ? '...' : '↓'} DOWNLOAD: {challenge.attachment_name}
+            </button>
+            {downloadError && (
+              <div className="notif notif-error" style={{ marginTop: 12 }}>
+                ✗ {downloadError}
+              </div>
+            )}
           </div>
         )}
 
