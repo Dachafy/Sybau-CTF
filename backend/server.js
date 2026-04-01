@@ -53,13 +53,27 @@ app.get('/api/health', (req, res) => {
 // Serve React production build
 const buildPath = path.join(__dirname, '../frontend/build');
 if (fs.existsSync(buildPath)) {
-  app.use(express.static(buildPath));
+  // Never cache index.html — always serve fresh
+  app.use(express.static(buildPath, {
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('index.html')) {
+        res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+      }
+    }
+  }));
   app.get('*', (req, res) => {
     if (!req.path.startsWith('/api') && !req.path.startsWith('/uploads')) {
+      res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
       res.sendFile(path.join(buildPath, 'index.html'));
     }
   });
 }
+
+
 
 // 404
 app.use((req, res) => {
