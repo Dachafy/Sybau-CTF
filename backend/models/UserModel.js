@@ -2,6 +2,18 @@ const { pool } = require('../config/db');
 const path = require('path');
 const fs = require('fs');
 
+const normalizeAssetPath = (url) => {
+  if (!url) return null;
+  if (url.startsWith('/')) return url;
+
+  try {
+    const parsed = new URL(url);
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return url;
+  }
+};
+
 // ─── Profile ──────────────────────────────────────────────────────────────────
 
 const getUserProfile = async (userId) => {
@@ -14,7 +26,12 @@ const getUserProfile = async (userId) => {
     WHERE u.id = ?
     GROUP BY u.id
   `, [userId]);
-  return rows[0] || null;
+  if (!rows[0]) return null;
+
+  return {
+    ...rows[0],
+    avatar_url: normalizeAssetPath(rows[0].avatar_url),
+  };
 };
 
 const getUserSubmissions = async (userId) => {
@@ -48,7 +65,12 @@ const getAvatarInfo = async (userId) => {
     'SELECT avatar_url, avatar_type FROM users WHERE id = ?',
     [userId]
   );
-  return rows[0] || null;
+  if (!rows[0]) return null;
+
+  return {
+    ...rows[0],
+    avatar_url: normalizeAssetPath(rows[0].avatar_url),
+  };
 };
 
 const deleteOldAvatarFile = async (userId) => {
@@ -90,7 +112,12 @@ const findById = async (id) => {
     'SELECT id, username, email, role, is_banned, avatar_url, avatar_preset, avatar_type, total_points FROM users WHERE id = ?',
     [id]
   );
-  return rows[0] || null;
+  if (!rows[0]) return null;
+
+  return {
+    ...rows[0],
+    avatar_url: normalizeAssetPath(rows[0].avatar_url),
+  };
 };
 
 module.exports = {

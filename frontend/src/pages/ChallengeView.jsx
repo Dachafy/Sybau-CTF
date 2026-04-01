@@ -12,6 +12,7 @@ export default function ChallengeView() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [showHint, setShowHint] = useState(false);
 
   const attachmentHref = challenge?.attachment_url
@@ -46,6 +47,33 @@ export default function ChallengeView() {
       setResult({ correct: false, message: err.response?.data?.error || 'Submission error' });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDownload = async (e) => {
+    if (!attachmentHref || downloading) return;
+
+    e.preventDefault();
+    setDownloading(true);
+
+    try {
+      const res = await fetch(attachmentHref, { credentials: 'include' });
+      if (!res.ok) throw new Error('Download failed');
+
+      const blob = await res.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+
+      link.href = blobUrl;
+      link.download = challenge?.attachment_name || 'attachment';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch {
+      window.location.href = attachmentHref;
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -110,13 +138,12 @@ export default function ChallengeView() {
             </div>
             <a
               href={attachmentHref}
+              onClick={handleDownload}
               download={challenge.attachment_name}
-              target="_blank"
-              rel="noreferrer"
               className="btn btn-cyan btn-sm"
               style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
             >
-              ↓ DOWNLOAD: {challenge.attachment_name}
+              ↓ {downloading ? 'DOWNLOADING...' : `DOWNLOAD: ${challenge.attachment_name}`}
             </a>
           </div>
         )}

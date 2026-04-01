@@ -1,5 +1,17 @@
 const { pool } = require('../config/db');
 
+const normalizeAssetPath = (url) => {
+  if (!url) return null;
+  if (url.startsWith('/')) return url;
+
+  try {
+    const parsed = new URL(url);
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return url;
+  }
+};
+
 // ─── Challenges ───────────────────────────────────────────────────────────────
 
 const getAllChallenges = async (userId, { category, difficulty } = {}) => {
@@ -19,7 +31,10 @@ const getAllChallenges = async (userId, { category, difficulty } = {}) => {
   if (difficulty) { sql += ' AND c.difficulty = ?';  params.push(difficulty); }
   sql += ' ORDER BY cat.title, c.difficulty, c.points';
   const [rows] = await pool.query(sql, params);
-  return rows;
+  return rows.map(row => ({
+    ...row,
+    attachment_url: normalizeAssetPath(row.attachment_url),
+  }));
 };
 
 const getChallengeById = async (userId, challengeId) => {
@@ -34,7 +49,12 @@ const getChallengeById = async (userId, challengeId) => {
     LEFT JOIN solves s ON s.challenge_id = c.id AND s.user_id = ?
     WHERE c.id = ? AND c.is_active = 1
   `, [userId, challengeId]);
-  return rows[0] || null;
+  if (!rows[0]) return null;
+
+  return {
+    ...rows[0],
+    attachment_url: normalizeAssetPath(rows[0].attachment_url),
+  };
 };
 
 // ─── Submissions ──────────────────────────────────────────────────────────────
