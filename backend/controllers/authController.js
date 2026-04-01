@@ -1,6 +1,5 @@
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { pool } = require('../config/db');
+const AuthModel = require('../models/AuthModel');
 
 const generateToken = (user) =>
   jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, {
@@ -21,19 +20,11 @@ const register = async (req, res) => {
     if (!/^[a-zA-Z0-9_]{3,20}$/.test(username))
       return res.status(400).json({ error: 'Username: 3-20 chars, letters/numbers/underscore only' });
 
-    const [existing] = await pool.query(
-      'SELECT id FROM users WHERE username = ? OR email = ?',
-      [username, email]
-    );
-    if (existing.length)
-      return res.status(409).json({ error: 'Username or email already exists' });
+    const existing = await AuthModel.findExistingUser(username, email);
+    if (existing) return res.status(409).json({ error: 'Username or email already exists' });
 
-    const hash = await bcrypt.hash(password, 12);
-    const [result] = await pool.query(
-      'INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)',
-      [username, email, hash]
-    );
-    res.status(201).json({ message: 'Registration successful', userId: result.insertId });
+    const userId = await AuthModel.createUser(username, email, password);
+    res.status(201).json({ message: 'Registration successful', userId });
   } catch (err) {
     console.error('[Auth] Register error:', err);
     res.status(500).json({ error: 'Server error during registration' });
@@ -46,22 +37,13 @@ const login = async (req, res) => {
     if (!identifier || !password)
       return res.status(400).json({ error: 'Username/email and password required' });
 
-    const [rows] = await pool.query(
-      'SELECT * FROM users WHERE username = ? OR email = ?',
-      [identifier, identifier]
-    );
-    if (!rows.length)
-      return res.status(401).json({ error: 'Invalid credentials' });
+    const user = await AuthModel.findByUsernameOrEmail(identifier);
+    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+    if (user.is_banned) return res.status(403).json({ error: 'Account has been banned' });
+    if (!user.password_hash) return res.status(401).json({ error: 'Please use OAuth to login' });
 
-    const user = rows[0];
-    if (user.is_banned)
-      return res.status(403).json({ error: 'Account has been banned' });
-    if (!user.password_hash)
-      return res.status(401).json({ error: 'Please use OAuth to login' });
-
-    const valid = await bcrypt.compare(password, user.password_hash);
-    if (!valid)
-      return res.status(401).json({ error: 'Invalid credentials' });
+    const valid = await AuthModel.verifyPassword(password, user.password_hash);
+    if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
 
     const token = generateToken(user);
     const { password_hash, ...safeUser } = user;
@@ -77,4 +59,3 @@ const getMe = async (req, res) => {
 };
 
 module.exports = { register, login, getMe };
-
