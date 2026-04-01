@@ -9,10 +9,14 @@ const getProfile = async (req, res) => {
     const solvedChallenges = await UserModel.getUserSolvedChallenges(req.user.id);
     res.json({ user, submissions, solvedChallenges });
   } catch (err) {
+    console.error('[User] Profile error:', err);
     res.status(500).json({ error: 'Failed to fetch profile' });
   }
 };
 
+// FIX: uploadAvatar was defined but the route (routes/users.js) never registers
+//      a POST /avatar route for file upload — only preset & delete exist.
+//      Kept here in case you re-add the route, but it won't break anything unused.
 const uploadAvatar = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
@@ -20,6 +24,7 @@ const uploadAvatar = async (req, res) => {
     await UserModel.setUploadedAvatar(req.user.id, url);
     res.json({ message: 'Avatar updated', avatar_url: url });
   } catch (err) {
+    console.error('[Avatar] Upload error:', err);
     res.status(500).json({ error: 'Failed to upload avatar' });
   }
 };
@@ -32,6 +37,7 @@ const setPresetAvatar = async (req, res) => {
     await UserModel.setPresetAvatar(req.user.id, preset);
     res.json({ message: 'Avatar updated', avatar_preset: preset });
   } catch (err) {
+    console.error('[Avatar] Preset error:', err);
     res.status(500).json({ error: 'Failed to set preset' });
   }
 };
@@ -41,8 +47,10 @@ const removeAvatar = async (req, res) => {
     await UserModel.clearAvatar(req.user.id);
     res.json({ message: 'Avatar removed' });
   } catch (err) {
+    console.error('[Avatar] Remove error:', err);
     res.status(500).json({ error: 'Failed to remove avatar' });
   }
 };
 
+// FIX: Export uploadAvatar so it's available if the route is wired up later
 module.exports = { getProfile, uploadAvatar, setPresetAvatar, removeAvatar };

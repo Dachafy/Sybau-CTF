@@ -1,4 +1,6 @@
 const { pool } = require('../config/db');
+const path = require('path');
+const fs = require('fs');
 
 // ─── Profile ──────────────────────────────────────────────────────────────────
 
@@ -41,14 +43,34 @@ const getUserSolvedChallenges = async (userId) => {
 
 // ─── Avatar ───────────────────────────────────────────────────────────────────
 
-// const setUploadedAvatar = async (userId, url) => {
-//   await pool.query(
-//     'UPDATE users SET avatar_url = ?, avatar_type = ? WHERE id = ?',
-//     [url, 'upload', userId]
-//   );
-// };
+const getAvatarInfo = async (userId) => {
+  const [rows] = await pool.query(
+    'SELECT avatar_url, avatar_type FROM users WHERE id = ?',
+    [userId]
+  );
+  return rows[0] || null;
+};
+
+const deleteOldAvatarFile = async (userId) => {
+  const info = await getAvatarInfo(userId);
+  if (info?.avatar_type === 'upload' && info?.avatar_url) {
+    const oldPath = path.join(__dirname, '..', info.avatar_url);
+    if (fs.existsSync(oldPath)) {
+      fs.unlinkSync(oldPath);
+    }
+  }
+};
+
+const setUploadedAvatar = async (userId, url) => {
+  await deleteOldAvatarFile(userId);
+  await pool.query(
+    'UPDATE users SET avatar_url = ?, avatar_type = ?, avatar_preset = NULL WHERE id = ?',
+    [url, 'upload', userId]
+  );
+};
 
 const setPresetAvatar = async (userId, preset) => {
+  await deleteOldAvatarFile(userId);
   await pool.query(
     'UPDATE users SET avatar_preset = ?, avatar_type = ?, avatar_url = NULL WHERE id = ?',
     [preset, 'preset', userId]
@@ -56,13 +78,22 @@ const setPresetAvatar = async (userId, preset) => {
 };
 
 const clearAvatar = async (userId) => {
+  await deleteOldAvatarFile(userId);
   await pool.query(
     'UPDATE users SET avatar_url = NULL, avatar_type = ?, avatar_preset = ? WHERE id = ?',
     ['default', 'default', userId]
   );
 };
 
+const findById = async (id) => {
+  const [rows] = await pool.query(
+    'SELECT id, username, email, role, is_banned, avatar_url, avatar_preset, avatar_type, total_points FROM users WHERE id = ?',
+    [id]
+  );
+  return rows[0] || null;
+};
+
 module.exports = {
   getUserProfile, getUserSubmissions, getUserSolvedChallenges,
-  setPresetAvatar, clearAvatar,
+  setUploadedAvatar, setPresetAvatar, clearAvatar, findById,
 };

@@ -1,26 +1,33 @@
 const jwt = require('jsonwebtoken');
-const { pool } = require('../config/db');
+const UserModel = require('../models/UserModel');
 
 const authenticate = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer '))
-      return res.status(401).json({ error: 'No token provided' });
+    let userId = null;
 
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // 1. Check session first (stored in DB)
+    if (req.session?.userId) {
+      userId = req.session.userId;
+    } else {
+      // 2. Fallback to JWT Bearer token
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        userId = decoded.id;
+      }
+    }
 
-    const [rows] = await pool.query(
-      'SELECT id, username, email, role, is_banned, avatar_url, avatar_preset, avatar_type, total_points FROM users WHERE id = ?',
-      [decoded.id]
-    );
-    if (!rows.length) return res.status(401).json({ error: 'User not found' });
-    if (rows[0].is_banned) return res.status(403).json({ error: 'Account banned' });
+    if (!userId) return res.status(401).json({ error: 'Not authenticated' });
 
-    req.user = rows[0];
+    const user = await UserModel.findById(userId);
+    if (!user) return res.status(401).json({ error: 'User not found' });
+    if (user.is_banned) return res.status(403).json({ error: 'Account banned' });
+
+    req.user = user;
     next();
   } catch (err) {
-    return res.status(401).json({ error: 'Invalid or expired token' });
+    return res.status(401).json({ error: 'Invalid or expired session' });
   }
 };
 

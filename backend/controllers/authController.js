@@ -45,17 +45,39 @@ const login = async (req, res) => {
     const valid = await AuthModel.verifyPassword(password, user.password_hash);
     if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
 
-    const token = generateToken(user);
-    const { password_hash, ...safeUser } = user;
-    res.json({ token, user: safeUser });
+    // Store user info in session
+    req.session.userId = user.id;
+    req.session.role   = user.role;
+
+    // FIX: Call session.save() before responding to guarantee the session
+    //      is written to the MySQL store before the client makes the next
+    //      request. Without this, a fast client can hit /api/auth/me before
+    //      the async write completes and get a 401.
+    req.session.save((err) => {
+      if (err) {
+        console.error('[Auth] Session save error:', err);
+        return res.status(500).json({ error: 'Session error during login' });
+      }
+      const token = generateToken(user);
+      const { password_hash, ...safeUser } = user;
+      res.json({ token, user: safeUser });
+    });
   } catch (err) {
     console.error('[Auth] Login error:', err);
     res.status(500).json({ error: 'Server error during login' });
   }
 };
 
+const logout = async (req, res) => {
+  req.session.destroy((err) => {
+    if (err) return res.status(500).json({ error: 'Logout failed' });
+    res.clearCookie('sybau_sid');
+    res.json({ message: 'Logged out successfully' });
+  });
+};
+
 const getMe = async (req, res) => {
   res.json({ user: req.user });
 };
 
-module.exports = { register, login, getMe };
+module.exports = { register, login, logout, getMe };
