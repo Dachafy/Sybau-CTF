@@ -41,12 +41,12 @@ const getUserSolvedChallenges = async (userId) => {
 
 // ─── Avatar ───────────────────────────────────────────────────────────────────
 
-const setUploadedAvatar = async (userId, url) => {
-  await pool.query(
-    'UPDATE users SET avatar_url = ?, avatar_type = ? WHERE id = ?',
-    [url, 'upload', userId]
-  );
-};
+// const setUploadedAvatar = async (userId, url) => {
+//   await pool.query(
+//     'UPDATE users SET avatar_url = ?, avatar_type = ? WHERE id = ?',
+//     [url, 'upload', userId]
+//   );
+// };
 
 const setPresetAvatar = async (userId, preset) => {
   await pool.query(
@@ -64,5 +64,5 @@ const clearAvatar = async (userId) => {
 
 module.exports = {
   getUserProfile, getUserSubmissions, getUserSolvedChallenges,
-  setUploadedAvatar, setPresetAvatar, clearAvatar,
+  setPresetAvatar, clearAvatar,
 };

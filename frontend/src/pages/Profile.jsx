@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
@@ -7,40 +7,31 @@ import { getAvatarDisplay, PRESETS } from '../utils/avatar';
 export default function Profile() {
   const { user, logout, refreshUser } = useAuth();
   const navigate = useNavigate();
+
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('stats');
   const [msg, setMsg] = useState('');
   const [error, setError] = useState('');
-  const fileRef = useRef();
 
   useEffect(() => {
     api.get('/users/profile')
       .then(r => setData(r.data))
+      .catch(err => console.error('Profile fetch failed', err))
       .finally(() => setLoading(false));
   }, []);
 
-  const handleAvatarUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const form = new FormData();
-    form.append('avatar', file);
-    try {
-      await api.post('/users/avatar/upload', form, { headers: { 'Content-Type': 'multipart/form-data' } });
-      setMsg('Avatar updated!');
-      refreshUser();
-    } catch (err) {
-      setError(err.response?.data?.error || 'Upload failed');
-    }
-  };
+  const av = getAvatarDisplay(user);
 
   const handlePreset = async (preset) => {
     try {
       await api.post('/users/avatar/preset', { preset });
       setMsg('Avatar updated!');
-      refreshUser();
+      await refreshUser();
+      setTimeout(() => setMsg(''), 3000);
     } catch (err) {
-      setError('Failed to set preset');
+      setError('Failed to update avatar');
+      setTimeout(() => setError(''), 3000);
     }
   };
 
@@ -48,50 +39,73 @@ export default function Profile() {
     try {
       await api.delete('/users/avatar');
       setMsg('Avatar removed');
-      refreshUser();
-    } catch {}
+      await refreshUser();
+      setTimeout(() => setMsg(''), 3000);
+    } catch (err) {
+      setError('Failed to remove avatar');
+      setTimeout(() => setError(''), 3000);
+    }
   };
 
-  const av = getAvatarDisplay(user);
-  const diffColor = { easy: 'var(--primary)', medium: 'var(--yellow)', hard: 'var(--red)' };
-
-  if (loading) return (
-    <div className="page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <span className="glow" style={{ fontFamily: 'var(--pixel)', fontSize: '10px' }}>LOADING<span className="blink">...</span></span>
-    </div>
-  );
+  if (loading) {
+    return (
+      <div className="page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span className="glow" style={{ fontFamily: 'var(--pixel)', fontSize: '10px' }}>
+          LOADING<span className="blink">...</span>
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="page container" style={{ paddingBottom: 60 }}>
       <div style={{ paddingTop: 30, maxWidth: 860, margin: '0 auto' }}>
+        
         {/* Profile Header */}
         <div className="pixel-card" style={{ marginBottom: 24, display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'center' }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 56, marginBottom: 8, lineHeight: 1 }}>
-              {av.type === 'img'
-                ? <img src={av.src} alt="avatar" style={{ width: 80, height: 80, border: '4px solid var(--primary)', display: 'block' }} />
-                : av.emoji}
+              {av.type === 'img' ? (
+                <img 
+                  src={av.src} 
+                  alt="avatar" 
+                  style={{ 
+                    width: 80, 
+                    height: 80, 
+                    border: '4px solid var(--primary)', 
+                    display: 'block',
+                    objectFit: 'cover',
+                    borderRadius: '6px'
+                  }} 
+                />
+              ) : (
+                <span style={{ fontSize: 60 }}>{av.emoji || '👤'}</span>
+              )}
             </div>
-            <button className="btn btn-sm" onClick={() => fileRef.current.click()}>UPLOAD</button>
-            <input type="file" ref={fileRef} style={{ display: 'none' }} accept="image/jpg,image/jpeg,image/png,image/webp" onChange={handleAvatarUpload} />
           </div>
 
           <div style={{ flex: 1 }}>
             <div style={{ fontFamily: 'var(--pixel)', fontSize: '14px', color: 'var(--accent)', marginBottom: 4 }}
-              className="glow-cyan">{data?.user?.username}</div>
+              className="glow-cyan">
+              {data?.user?.username || user?.username}
+            </div>
             <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text-dim)', marginBottom: 12 }}>
-              {data?.user?.email}
+              {data?.user?.email || user?.email}
             </div>
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-              <StatBox label="POINTS" value={data?.user?.total_points} color="var(--yellow)" />
-              <StatBox label="SOLVES" value={data?.user?.solve_count} color="var(--primary)" />
-              <StatBox label="ROLE" value={data?.user?.role?.toUpperCase()} color="var(--magenta)" />
+              <StatBox label="POINTS" value={data?.user?.total_points ?? user?.total_points} color="var(--yellow)" />
+              <StatBox label="SOLVES" value={data?.user?.solve_count ?? user?.solve_count} color="var(--primary)" />
+              <StatBox label="ROLE" value={(data?.user?.role || user?.role)?.toUpperCase()} color="var(--magenta)" />
             </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <button className="btn btn-red btn-sm" onClick={() => { logout(); navigate('/'); }}>SIGN OUT</button>
-            <button className="btn btn-sm" onClick={handleRemoveAvatar}>RM AVATAR</button>
+            <button className="btn btn-red btn-sm" onClick={() => { logout(); navigate('/'); }}>
+              SIGN OUT
+            </button>
+            <button className="btn btn-sm" onClick={handleRemoveAvatar}>
+              RM AVATAR
+            </button>
           </div>
         </div>
 
@@ -101,18 +115,26 @@ export default function Profile() {
         {/* Tabs */}
         <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderBottom: '3px solid var(--primary)' }}>
           {['stats', 'history', 'avatar'].map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)} style={{
-              fontFamily: 'var(--pixel)', fontSize: '8px', padding: '10px 16px',
-              background: activeTab === tab ? 'var(--primary)' : 'transparent',
-              color: activeTab === tab ? 'var(--bg)' : 'var(--primary)',
-              border: 'none', cursor: 'pointer', borderRight: '1px solid var(--primary)',
-            }}>
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              style={{
+                fontFamily: 'var(--pixel)',
+                fontSize: '8px',
+                padding: '10px 16px',
+                background: activeTab === tab ? 'var(--primary)' : 'transparent',
+                color: activeTab === tab ? 'var(--bg)' : 'var(--primary)',
+                border: 'none',
+                cursor: 'pointer',
+                borderRight: '1px solid var(--primary)',
+              }}
+            >
               {tab.toUpperCase()}
             </button>
           ))}
         </div>
 
-        {/* Tab content */}
+        {/* Tab Contents */}
         {activeTab === 'stats' && (
           <div>
             <div style={{ fontFamily: 'var(--pixel)', fontSize: '9px', color: 'var(--text-dim)', marginBottom: 16 }}>
@@ -195,12 +217,21 @@ export default function Profile() {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 12 }}>
               {Object.entries(PRESETS).map(([key, emoji]) => (
-                <button key={key} onClick={() => handlePreset(key)} style={{
-                  background: user?.avatar_preset === key ? 'rgba(0,255,136,0.15)' : 'var(--bg2)',
-                  border: `3px solid ${user?.avatar_preset === key ? 'var(--primary)' : 'rgba(0,255,136,0.3)'}`,
-                  padding: 16, cursor: 'pointer', fontSize: 32, display: 'flex',
-                  flexDirection: 'column', alignItems: 'center', gap: 6,
-                }}>
+                <button
+                  key={key}
+                  onClick={() => handlePreset(key)}
+                  style={{
+                    background: user?.avatar_preset === key ? 'rgba(0,255,136,0.15)' : 'var(--bg2)',
+                    border: `3px solid ${user?.avatar_preset === key ? 'var(--primary)' : 'rgba(0,255,136,0.3)'}`,
+                    padding: 16,
+                    cursor: 'pointer',
+                    fontSize: 32,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
                   {emoji}
                   <span style={{ fontFamily: 'var(--pixel)', fontSize: '6px', color: 'var(--text-dim)' }}>
                     {key}
