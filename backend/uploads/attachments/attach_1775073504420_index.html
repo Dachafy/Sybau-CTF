@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SYBAUCTF • web exploit</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        body { margin:0; padding:40px 20px; background:#1f001f; color:#ff00ff; font-family:'Press Start 2P', cursive; text-align:center; }
+        .terminal { max-width:740px; margin:40px auto; border:5px solid #ff00ff; background:#0f000f; padding:40px; box-shadow:0 0 50px #ff00ff; }
+        h1 { font-size:2.6em; }
+        button { background:#ff00ff; color:#000; padding:18px 40px; margin:15px; font-family:'Press Start 2P', cursive; cursor:pointer; }
+        button:hover { background:#ff77ff; }
+        .scanline { position:fixed; inset:0; background:repeating-linear-gradient(transparent 0px, transparent 2px, rgba(255,0,255,0.07) 2px, rgba(255,0,255,0.07) 4px); animation:scan 5s linear infinite; pointer-events:none; }
+        @keyframes scan { 0% { background-position:0 0; } 100% { background-position:0 200%; } }
+    </style>
+</head>
+<body>
+<div class="scanline"></div>
+<div class="terminal">
+    <h1>web exploit</h1>
+    <p class="subtitle">SYBAUCTF • Web Exploitation • 100 pts • Easy</p>
+    <p>👾 Admin Dashboard - Click around and inspect everything.</p>
+    <button onclick="viewDashboard()">VIEW DASHBOARD</button>
+    <button onclick="inspectSource()">INSPECT SOURCE</button>
+</div>
+
+<script>
+const REAL_FLAG = "flag{SYBAU_web_exploit_hidden_in_plain_sight}";
+
+function viewDashboard() {
+    alert("Dashboard loaded... but nothing useful? Try viewing page source or pressing keys.");
+}
+
+function inspectSource() {
+    console.log("%c🔓 Web Exploit hint: Look for hidden elements, comments, or localStorage. Flag is client-side hidden.", "color:#ff00ff; font-size:16px");
+    localStorage.setItem("dashboard_flag", REAL_FLAG);
+    // Hidden div example
+    const hidden = document.createElement('div');
+    hidden.style.display = 'none';
+    hidden.id = 'secret';
+    hidden.textContent = REAL_FLAG;
+    document.body.appendChild(hidden);
+    alert("Check console + localStorage + View Page Source!");
+}
+</script>
+</body>
+</html>

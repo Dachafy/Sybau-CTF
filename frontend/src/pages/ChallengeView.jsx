@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import api from '../utils/api';
+import api, { STATIC_BASE } from '../utils/api'; // FIX: import STATIC_BASE
 import { useAuth } from '../context/AuthContext';
 
 export default function ChallengeView() {
@@ -48,8 +48,6 @@ export default function ChallengeView() {
   );
 
   if (!challenge) return null;
-
-  const diffColor = { easy: 'var(--primary)', medium: 'var(--yellow)', hard: 'var(--red)' }[challenge.difficulty];
 
   return (
     <div className="page container" style={{ paddingBottom: 60 }}>
@@ -102,10 +100,17 @@ export default function ChallengeView() {
             <div style={{ fontFamily: 'var(--pixel)', fontSize: '8px', color: 'var(--cyan)', marginBottom: 10 }}>
               {'>'} ATTACHMENT
             </div>
-            <a href={`http://localhost:5000${challenge.attachment_url}`}
+            {/* FIX: was hardcoded http://localhost:5000 — now uses STATIC_BASE
+                 which resolves to window.location.origin in prod and
+                 http://localhost:5000 in dev. This works in all environments. */}
+            <a
+              href={`${STATIC_BASE}${challenge.attachment_url}`}
               download={challenge.attachment_name}
+              target="_blank"
+              rel="noreferrer"
               className="btn btn-cyan btn-sm"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
+            >
               ↓ DOWNLOAD: {challenge.attachment_name}
             </a>
           </div>
