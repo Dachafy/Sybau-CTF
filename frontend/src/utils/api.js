@@ -1,8 +1,10 @@
 import axios from 'axios';
 
-// Always use the current origin — works in dev (localhost:3000 proxied to :5000)
-// and in production (same domain). Never hardcode localhost.
-export const STATIC_BASE = window.location.origin;
+// Static files are served by the backend directly, so in development they need
+// the API server origin instead of the CRA dev server origin.
+export const STATIC_BASE = process.env.NODE_ENV === 'development'
+  ? 'http://localhost:5000'
+  : window.location.origin;
 
 const api = axios.create({
   baseURL: '/api',

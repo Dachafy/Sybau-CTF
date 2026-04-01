@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import api from '../utils/api';
+import api, { STATIC_BASE } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 
 export default function ChallengeView() {
@@ -13,6 +13,12 @@ export default function ChallengeView() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showHint, setShowHint] = useState(false);
+
+  const attachmentHref = challenge?.attachment_url
+    ? (challenge.attachment_url.startsWith('http')
+        ? challenge.attachment_url
+        : `${STATIC_BASE}${challenge.attachment_url}`)
+    : null;
 
   useEffect(() => {
     api.get(`/challenges/${id}`)
@@ -30,7 +36,11 @@ export default function ChallengeView() {
       const res = await api.post(`/challenges/${id}/submit`, { flag });
       setResult(res.data);
       if (res.data.correct) {
-        setChallenge(prev => ({ ...prev, is_solved: true }));
+        setChallenge(prev => ({
+          ...prev,
+          is_solved: true,
+          solve_count: (prev?.solve_count || 0) + 1,
+        }));
         refreshUser();
         setFlag('');
       }
@@ -100,11 +110,8 @@ export default function ChallengeView() {
             <div style={{ fontFamily: 'var(--pixel)', fontSize: '8px', color: 'var(--cyan)', marginBottom: 10 }}>
               {'>'} ATTACHMENT
             </div>
-            {/* FIX: was hardcoded http://localhost:5000 — now uses STATIC_BASE
-                 which resolves to window.location.origin in prod and
-                 http://localhost:5000 in dev. This works in all environments. */}
             <a
-              href={challenge.attachment_url}
+              href={attachmentHref}
               download={challenge.attachment_name}
               target="_blank"
               rel="noreferrer"

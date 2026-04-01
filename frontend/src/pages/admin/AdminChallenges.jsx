@@ -7,10 +7,7 @@ const BLANK = { title:'', description:'', category_id:'', difficulty:'easy', poi
 //      Axios must NOT set Content-Type manually for FormData — the browser
 //      sets it automatically WITH the boundary string multer needs to parse
 //      the file. Without this, multer sees no file and req.file is undefined.
-const sendFormData = (method, url, fd) =>
-  api[method](url, fd, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+const sendFormData = (method, url, fd) => api[method](url, fd);
 
 export default function AdminChallenges() {
   const [challenges, setChallenges] = useState([]);
@@ -68,6 +65,7 @@ export default function AdminChallenges() {
       points:      ch.points,
       flag:        ch.flag || '',
       hint:        ch.hint || '',
+      attachment_name: ch.attachment_name || '',
     });
     setEditId(ch.id);
     setShowForm(true);
