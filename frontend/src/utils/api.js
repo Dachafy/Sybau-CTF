@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-export const STATIC_BASE = process.env.NODE_ENV === 'production'
-  ? window.location.origin
-  : 'http://localhost:5000';
+// Always use the current origin — works in dev (localhost:3000 proxied to :5000)
+// and in production (same domain). Never hardcode localhost.
+export const STATIC_BASE = window.location.origin;
 
 const api = axios.create({
   baseURL: '/api',

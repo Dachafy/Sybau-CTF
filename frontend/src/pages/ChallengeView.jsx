@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import api, { STATIC_BASE } from '../utils/api'; // FIX: import STATIC_BASE
+import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 
 export default function ChallengeView() {
@@ -104,7 +104,7 @@ export default function ChallengeView() {
                  which resolves to window.location.origin in prod and
                  http://localhost:5000 in dev. This works in all environments. */}
             <a
-              href={`${STATIC_BASE}${challenge.attachment_url}`}
+              href={challenge.attachment_url}
               download={challenge.attachment_name}
               target="_blank"
               rel="noreferrer"
