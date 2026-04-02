@@ -206,7 +206,7 @@ export default function ChallengeView() {
                   className="pixel-input"
                   style={{ flex: 1, minWidth: 200 }}
                   type="text"
-                  placeholder="CTF{enter_your_flag_here}..."
+                  placeholder="sybau{enter_your_flag_here}"
                   value={flag}
                   onChange={e => setFlag(e.target.value)}
                   disabled={submitting}
